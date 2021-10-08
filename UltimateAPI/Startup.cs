@@ -7,8 +7,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NLog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UltimateAPI.Extensions;
@@ -19,6 +21,8 @@ namespace UltimateAPI
     {
         public Startup(IConfiguration configuration)
         {
+            LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(), "/nlog.config")); //загрузка параметров логгирования из файла nlog.config
+
             Configuration = configuration;
         }
 
@@ -29,6 +33,7 @@ namespace UltimateAPI
         {
             services.ConfigureCors();
             services.ConfigureIISIntegration();
+            services.ConfigureLoggerService();
 
             services.AddControllers();
         }
