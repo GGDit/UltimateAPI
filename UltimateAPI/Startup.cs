@@ -43,6 +43,13 @@ namespace WebAPI
             services.ConfigureRepositoryManager();
 
             services.AddAutoMapper(typeof(Startup));
+
+            services.AddControllers(config => 
+            { 
+                config.RespectBrowserAcceptHeader = true;
+                config.ReturnHttpNotAcceptable = true;
+            }).AddXmlDataContractSerializerFormatters()
+              .AddCustomCSVFormatter();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
