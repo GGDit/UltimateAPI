@@ -15,6 +15,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebAPI.Extensions;
 using Contracts;
+using ActionFilters.Filters;
+using Entities.DataTransferObjects;
+using Repository;
 
 namespace WebAPI
 {
@@ -48,8 +51,26 @@ namespace WebAPI
             { 
                 config.RespectBrowserAcceptHeader = true;
                 config.ReturnHttpNotAcceptable = true;
-            }).AddXmlDataContractSerializerFormatters()
+            }).AddNewtonsoftJson()
+              .AddXmlDataContractSerializerFormatters()
               .AddCustomCSVFormatter();
+
+            services.Configure<ApiBehaviorOptions>(options => 
+            { 
+                options.SuppressModelStateInvalidFilter = true; 
+            });
+
+            services.AddScoped<ValidationFilterAttribute>();
+            services.AddScoped<ValidateCompanyExistsAttribute>();
+            services.AddScoped<ValidateEmployeeForCompanyExistsAttribute>();
+
+            services.AddScoped<IDataShaper<EmployeeDto>, DataShaper<EmployeeDto>>();
+
+            services.ConfigureVersioning();
+
+            services.AddAuthentication(); 
+            services.ConfigureIdentity();
+            //services.ConfigureJWT(Configuration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -70,12 +91,15 @@ namespace WebAPI
 
             app.UseRouting(); //Добавляют функции маршрутизации
 
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             app.UseAuthorization(); //Добавляют функции авторизации
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-            }); //Добавляет конечную точку для действия контроллера в маршрутизацию без указания каких-либо маршрутов
+            }); //Добавляет конечную точку для действия контроллера в маршрутизацию без указания каких-либо маршрутов          
         }
     }
 }

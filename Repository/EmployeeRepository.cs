@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 using Contracts;
 using Entities;
 using Entities.Models;
+using Entities.RequestFeatures;
+using Repository.Extensions;
+using Microsoft.EntityFrameworkCore;
+using Entities.DataTransferObjects;
 
 namespace Repository
 {
@@ -16,19 +20,32 @@ namespace Repository
         { 
         }
 
-        public IEnumerable<Employee> GetEmployees(Guid companyId, bool trackChanges) =>
-            FindByCondition(e => e.CompanyId.Equals(companyId), trackChanges)
-            .OrderBy(e => e.Name);
+        public async Task<PagedList<Employee>> GetEmployeesAsync(Guid companyId, EmployeeParameters employeeParameters, bool trackChanges) 
+        {
+            var employees = await FindByCondition(e => e.CompanyId.Equals(companyId), trackChanges)
+                .FilterEmployees(employeeParameters.MinAge, employeeParameters.MaxAge)
+                .Search(employeeParameters.SearchTerm)
+                .Sort(employeeParameters.OrderBy)
+                .OrderBy(e => e.Name)
+                .ToListAsync();
+            
+            return PagedList<Employee>
+                .ToPagedList(employees, employeeParameters.PageNumber, employeeParameters.PageSize); 
+        }
 
-        public Employee GetEmployee(Guid companyId, Guid id, bool trackChanges) =>
-            FindByCondition(e => e.CompanyId.Equals(companyId) &&
-            e.Id.Equals(id), trackChanges)
-            .SingleOrDefault();
+        public async Task<Employee> GetEmployeeAsync(Guid companyId, Guid id, bool trackChanges) =>
+            await FindByCondition(e => e.CompanyId.Equals(companyId) && e.Id.Equals(id), trackChanges)
+            .SingleOrDefaultAsync();
 
         public void CreateEmployeeForCompany(Guid companyId, Employee employee)
         {
             employee.CompanyId = companyId;
             Create(employee);
+        }
+
+        public void DeleteEmployee(Employee employee)
+        {
+            Delete(employee);
         }
     }
 }
